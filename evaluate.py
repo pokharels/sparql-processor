@@ -6,7 +6,7 @@ from src.TabularData import TabularData
 
 def main(args):
     d = DataLoader(args.data_path)
-    q = QueryPreprocessor()
+    # q = QueryPreprocessor()
     td = TabularData([])
     print("HELLO WORLD", d, q, td)
 
