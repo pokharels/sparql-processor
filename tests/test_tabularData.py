@@ -1,8 +1,8 @@
 import pytest
-from src.QueryProcessor import QueryPreprocessor
+from src.TabularData import TabularData as TD
 
 
-class TestQueryPreprocessor:
+class TestTabularData:
 
     @pytest.fixture
     def simple_query(self):
@@ -16,7 +16,7 @@ class TestQueryPreprocessor:
     @pytest.fixture
     def complex_query(self):
         query = """
-        SELECT 
+        SELECT
             follows.subject,
             follows.object,
             friendOf.object,
@@ -24,7 +24,7 @@ class TestQueryPreprocessor:
             hasReview.object
         FROM follows, friendOf, likes, hasReview
         WHERE follows.object = friendOf.subject
-            AND friendOf.object = likes.subject 
+            AND friendOf.object = likes.subject
             AND likes.object = hasReview.subject
         """
         return query
@@ -33,14 +33,14 @@ class TestQueryPreprocessor:
 
         pattern = r"SELECT\s+(.*?)\s+FROM"
 
-        result = QueryPreprocessor._get_clause(simple_query, pattern)
+        result = TD._get_clause(simple_query, pattern)
         expected_result = "follows.subject, follows.object"
         assert result == expected_result
 
     def test_get_clause_where(self, simple_query):
         pattern = r"FROM\s+(.*?)\s+WHERE"
 
-        result = QueryPreprocessor._get_clause(simple_query, pattern)
+        result = TD._get_clause(simple_query, pattern)
         expected_result = "follows"
         assert result == expected_result
 
@@ -48,11 +48,12 @@ class TestQueryPreprocessor:
         pattern = r"WHERE\s+(.*?)$"
 
         with pytest.raises(AttributeError):
-            QueryPreprocessor._get_clause(simple_query, pattern)
+            TD._get_clause(simple_query, pattern)
 
     def test_extract_from_sql(self, simple_query):
-        preprocessor = QueryPreprocessor(simple_query)
-        assert preprocessor.columns == ["follows.subject", "follows.object"]
-        assert preprocessor.properties == ["follows"]
-        assert preprocessor.join_conditions == [
+        properties, columns, join_conditions = TD._extract_from_sql_query(
+            simple_query)
+        assert columns == ["follows.subject", "follows.object"]
+        assert properties == ["follows"]
+        assert join_conditions == [
             ("follows.object", "friendOf.subject")]

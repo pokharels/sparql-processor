@@ -5,10 +5,22 @@ from src.TabularData import TabularData
 
 
 def main(args):
-    d = DataLoader(args.data_path)
-    # q = QueryPreprocessor()
+    query = """
+        SELECT
+            follows.subject,
+            follows.object,
+            friendOf.object,
+            likes.object,
+            hasReview.object
+        FROM follows, friendOf, likes, hasReview
+        WHERE follows.object = friendOf.subject
+            AND friendOf.object = likes.subject
+            AND likes.object = hasReview.subject
+    """
+
+    d_loader = DataLoader(args.data_path)
     td = TabularData([])
-    print("HELLO WORLD", d, q, td)
+    td.execute_query(query)
 
 
 if __name__ == "__main__":
