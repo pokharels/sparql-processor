@@ -1,6 +1,6 @@
 import argparse
+import time
 from src.DataLoader import DataLoader
-from src.QueryProcessor import QueryPreprocessor
 from src.TabularData import TabularData
 
 
@@ -18,9 +18,11 @@ def main(args):
             AND likes.object = hasReview.subject
     """
 
-    d_loader = DataLoader(args.data_path)
-    td = TabularData([])
-    td.execute_query(query)
+    start_time = time.time()
+    td = TabularData(args.data_path)
+    td.execute_query(query, args.join_type)
+
+    print(f"Query execution finished in {time.time() - start_time}s")
 
 
 if __name__ == "__main__":
@@ -28,6 +30,9 @@ if __name__ == "__main__":
 
     parser.add_argument(
         "--data_path", default="./data/watdiv100k.txt")
+    parser.add_argument(
+        "--join_type", default="hash")
+
     args = parser.parse_args()
 
     main(args)
