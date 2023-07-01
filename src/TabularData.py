@@ -2,8 +2,6 @@
     Tabular Data Class.
 """
 
-import re
-from src.TabularDataFrame import TabularDataHolder
 from src.utils import read_file_lines, save_to_json
 
 
@@ -59,13 +57,12 @@ class TabularData:
             property_key = ext_values[1]
             object_value = ext_values[2]
 
-
             # Add property to all_dicts if it doesn't exist
             if property_key not in all_dicts.keys():
                 all_dicts[property_key] = {
                     'Subject': [],
                     'Object': []
-            }
+                }
 
             # Add to mapper if it doesn't exist
             if subject_value not in mapper.keys():
@@ -92,42 +89,62 @@ class TabularData:
 
         return all_dicts
 
-    @staticmethod
-    def _get_clause(query: str, pattern: str) -> re.Match:
-        return re.search(pattern, query, re.IGNORECASE).group(1)
 
     @staticmethod
     def _extract_from_sql_query(query: str) -> tuple:
-        select_pattern = r"SELECT\s+(.*?)\s+FROM"
-        from_pattern = r"FROM\s+(.*?)\s+WHERE"
-        where_pattern = r"WHERE\s+(.*)"
+        query = " ".join(query.split())
 
-        select_clause = TabularData._get_clause(query, select_pattern)
-        from_clause = TabularData._get_clause(query, from_pattern)
-        where_clause = TabularData._get_clause(query, where_pattern)
+        select_start = query.find("SELECT") + len("SELECT")
+        select_end = query.find("FROM")
+        select_clause = query[select_start:select_end].strip()
 
-        columns = [col.strip() for col in select_clause.split(',')]
-        tables = [table.strip() for table in from_clause.split(',')]
+        from_start = select_end + len("FROM")
+        from_end = query.find("WHERE")
+        from_clause = query[from_start:from_end].strip()
 
-        join_conditions = []
-        where_conditions = where_clause.split('AND')
-        for condition in where_conditions:
-            condition = condition.strip()
-            left, right = condition.split('=')
-            join_conditions.append((left.strip(), right.strip()))
+        where_start = from_end + len("WHERE")
+        where_clause = query[where_start:].strip()
 
+        columns = [col.strip() for col in select_clause.split(",")]
+        tables = [table.strip() for table in from_clause.split(",")]
+
+        join_conditions = [
+            condition.strip() for condition in where_clause.split("AND")]
         return tables, columns, join_conditions
 
     def execute_query(self, query: str, join_type: str):
         tables, columns, join_conditions = self._extract_from_sql_query(query)
         # TODO: Process tables, columns, join_conditions
-        # for t1_name, t2_name in zip(tables, tables[1:]):
-        #     table1 = self.properties[t1_name]
-        #     table2 = self.properties[t2_name]
+        # Initialize the partial_join dictionary to store the intermediate results
+        partial_join = {}
 
-        #     partial_join = self.join(table1, table2, on_columns=, join_type=join_type)
-        result = []
-        # table0 = self.properties[tables[0]]
+        # Process tables: Initialize the partial_join dictionary with table data
+        for table in tables:
+            partial_join[table] = self.properties[table]
+
+        # Process join_conditions: Perform the joins iteratively
+        for cond in join_conditions:
+            cond1, cond2 = cond.split("=")
+            table_columns1 = cond1.split(".")
+            table_columns2 = cond2.split(".")
+            table1, column1 = table_columns1[0].strip(), table_columns1[1].strip()
+            table2, column2 = table_columns2[0].strip(), table_columns2[1].strip()
+
+            # Perform the join
+            partial_join[f"{table1}_{table2}"] = self.join(
+                partial_join[table1],
+                partial_join[table2],
+                on_columns={table1: column1, table2: column2},
+                join_type=join_type
+            )
+            breakpoint()
+
+        # Project the final result based on the SELECTed columns
+        result = {col: [] for col in columns}
+        for col in columns:
+            table, column = col.split(".")
+            result[col] = partial_join[table][column]
+
         return result
 
     def _check_table_in_join_conditions(self):
@@ -146,6 +163,28 @@ class TabularData:
         else:
             raise NotImplementedError
 
+    def nested_loop_join(table1, table2, on_columns):
+        join_result = {col_name: [] for col_name in table1.keys()}
+
+        # Get join column names and their respective table names
+        join_column1 = on_columns[list(on_columns.keys())[0]]
+        join_column2 = on_columns[list(on_columns.keys())[1]]
+
+        # Find the index of the join columns in each table
+        idx_join_col1 = table1[list(table1.keys())[0]].index(join_column1)
+        idx_join_col2 = table2[list(table2.keys())[0]].index(join_column2)
+
+        # Perform the nested loop join
+        for row1 in zip(*table1.values()):
+            for row2 in zip(*table2.values()):
+                if row1[idx_join_col1] == row2[idx_join_col2]:
+                    for col_name in table1.keys():
+                        join_result[col_name].append(row1[table1[col_name].index(col_name)])
+                    for col_name in table2.keys():
+                        join_result[col_name].append(row2[table2[col_name].index(col_name)])
+
+        return join_result
+
     def _hash_join(self, t1, t2):
         pass
 
@@ -154,3 +193,16 @@ class TabularData:
 
     def _radix_hash_join(self, t1, t2):
         pass
+
+    def _load_mapping_file(self, mapping_file_path: str) -> dict:
+        pass
+
+    def retrieve_string_data(self,
+                             final_results,
+                             file_path: str,
+                             mapping_file_path: str):
+        assert mapping_file_path is not None, "Mapping file found empty"
+        mapping = self._load_mapping_file(mapping_file_path)
+        # Swap key, value pair
+        # return unmapped_data
+        return mapping

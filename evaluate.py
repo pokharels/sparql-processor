@@ -1,6 +1,5 @@
 import argparse
 import time
-from src.DataLoader import DataLoader
 from src.TabularData import TabularData
 
 

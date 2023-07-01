@@ -29,26 +29,15 @@ class TestTabularData:
         """
         return query
 
-    def test_get_clause(self, simple_query):
+    def test_extract_from_sql_select(self, simple_query):
+        _, columns, _ = TD._extract_from_sql_query(simple_query)
+        expected_result = ["follows.subject", "follows.object"]
+        assert columns == expected_result
 
-        pattern = r"SELECT\s+(.*?)\s+FROM"
-
-        result = TD._get_clause(simple_query, pattern)
-        expected_result = "follows.subject, follows.object"
-        assert result == expected_result
-
-    def test_get_clause_where(self, simple_query):
-        pattern = r"FROM\s+(.*?)\s+WHERE"
-
-        result = TD._get_clause(simple_query, pattern)
+    def test_extract_from_sql_from(self, simple_query):
+        tables, _, _ = TD._extract_from_sql_query(simple_query)
         expected_result = "follows"
-        assert result == expected_result
-
-    def test_get_clause_no_match(self, simple_query):
-        pattern = r"WHERE\s+(.*?)$"
-
-        with pytest.raises(AttributeError):
-            TD._get_clause(simple_query, pattern)
+        assert tables == [expected_result]
 
     def test_extract_from_sql(self, simple_query):
         properties, columns, join_conditions = TD._extract_from_sql_query(
@@ -56,4 +45,4 @@ class TestTabularData:
         assert columns == ["follows.subject", "follows.object"]
         assert properties == ["follows"]
         assert join_conditions == [
-            ("follows.object", "friendOf.subject")]
+            "follows.object = friendOf.subject"]
