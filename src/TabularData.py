@@ -155,6 +155,12 @@ class TabularData:
     def _process_column_list(self, data):
         pass
 
+
+    self _projection(partial_join, cond1, cond2):
+        projections = {}
+
+        return projections
+
     def join(self, partial_join, cond1, cond2, join_type: str = "hash"):
         # TODO: Implement projection as well.
 
@@ -188,19 +194,23 @@ class TabularData:
         partial_join = self._projection(partial_join, cond1, cond2)
 
     def _hash_join(self, data1, data2):
-        pass
+        join_result = []
+        return join_result
 
     def _merge_sort_join(self, data1, data2):
         """
             Assumption: table1 is dictionary with keys subject and object
             that contain lists
         """
+        join_result = []
         i = 0
-
         breakpoint()
+        return join_result
 
     def _radix_hash_join(self, data1, data2):
-        pass
+        join_result = []
+        
+        return join_result
 
     def _load_mapping_file(self, mapping_file_path: str) -> dict:
         pass
