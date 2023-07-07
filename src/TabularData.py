@@ -28,10 +28,12 @@ class TabularData:
         :return: Tabular Data string representation
         :rtype: str
         """
-        return self.table
+        return ""  # self.table
 
     def read_rdf(self, file_path: str, map_file: str = "mapping.json") -> dict:
-        # Read File and parse data and store into tables, based on property
+        """ 
+            Read File and parse data and store into tables, based on property
+        """
         all_lines = read_file_lines(filepath=file_path)
 
         mapper = {}
@@ -89,7 +91,6 @@ class TabularData:
 
         return all_dicts
 
-
     @staticmethod
     def _extract_from_sql_query(query: str) -> tuple:
         query = " ".join(query.split())
@@ -119,33 +120,34 @@ class TabularData:
         partial_join = {}
 
         # Process tables: Initialize the partial_join dictionary with table data
-        for table in tables:
-            partial_join[table] = self.properties[table]
+        # for table in tables:
+        #     partial_join[table] = self.properties[table]
 
         # Process join_conditions: Perform the joins iteratively
         for cond in join_conditions:
             cond1, cond2 = cond.split("=")
-            table_columns1 = cond1.split(".")
-            table_columns2 = cond2.split(".")
-            table1, column1 = table_columns1[0].strip(), table_columns1[1].strip()
-            table2, column2 = table_columns2[0].strip(), table_columns2[1].strip()
 
-            # Perform the join
-            partial_join[f"{table1}_{table2}"] = self.join(
-                partial_join[table1],
-                partial_join[table2],
-                on_columns={table1: column1, table2: column2},
-                join_type=join_type
-            )
-            breakpoint()
+            partial_join = self.join(partial_join, cond1, cond2)
+
+            # table1, column1 = table_columns1[0].strip(), table_columns1[1].strip()
+            # table2, column2 = table_columns2[0].strip(), table_columns2[1].strip()
+
+            # # Perform the join
+            # partial_join[f"{table1}_{table2}"] = self.join(
+            #     partial_join[table1],
+            #     partial_join[table2],
+            #     on_columns={table1: column1, table2: column2},
+            #     join_type=join_type
+            # )
+            # breakpoint()
 
         # Project the final result based on the SELECTed columns
-        result = {col: [] for col in columns}
-        for col in columns:
-            table, column = col.split(".")
-            result[col] = partial_join[table][column]
+        # result = {col: [] for col in columns}
+        # for col in columns:
+        #     table, column = col.split(".")
+        #     result[col] = partial_join[table][column]
 
-        return result
+        return partial_join
 
     def _check_table_in_join_conditions(self):
         pass
@@ -153,45 +155,51 @@ class TabularData:
     def _process_column_list(self, data):
         pass
 
-    def join(self, table1, table2, on_columns: list, join_type: str = "hash"):
-        if join_type == "hash":
-            self._hash_join(table1, table2)
-        elif join_type == "merge_sort":
-            self._merge_sort_join(table1, table2)
-        elif join_type == "radix_hash_join":
-            self._radix_hash_join(table1, table2)
+    def join(self, partial_join, cond1, cond2, join_type: str = "hash"):
+        # TODO: Implement projection as well.
+
+        (tab1, col1) = cond1.split(".")
+        (tab2, col2) = cond2.split(".")
+
+        if tab1 in partial_join:
+            data1 = partial_join[cond1]
         else:
-            raise NotImplementedError
+            data1 = self.properties[tab1][col1]
 
-    def nested_loop_join(table1, table2, on_columns):
-        join_result = {col_name: [] for col_name in table1.keys()}
+        if tab2 in partial_join:
+            data2 = partial_join[cond2]
+        else:
+            data2 = self.properties[tab2][col2]
 
-        # Get join column names and their respective table names
-        join_column1 = on_columns[list(on_columns.keys())[0]]
-        join_column2 = on_columns[list(on_columns.keys())[1]]
+        if join_type == "hash":
+            join_result = self._hash_join(data1, data2)
+        elif join_type == "merge_sort":
+            join_result = self._merge_sort_join(data1, data2)
+        elif join_type == "radix_hash_join":
+            join_result = self._radix_hash_join(data1, data2)
+        else:
+            raise NotImplementedError("Join type not implemented")
 
-        # Find the index of the join columns in each table
-        idx_join_col1 = table1[list(table1.keys())[0]].index(join_column1)
-        idx_join_col2 = table2[list(table2.keys())[0]].index(join_column2)
+        partial_join[tab_col1] = join_result
+        partial_join[tab_col2] = join_result
+        
+        # Find projection and update partial join
 
-        # Perform the nested loop join
-        for row1 in zip(*table1.values()):
-            for row2 in zip(*table2.values()):
-                if row1[idx_join_col1] == row2[idx_join_col2]:
-                    for col_name in table1.keys():
-                        join_result[col_name].append(row1[table1[col_name].index(col_name)])
-                    for col_name in table2.keys():
-                        join_result[col_name].append(row2[table2[col_name].index(col_name)])
+        partial_join = self._projection(partial_join, cond1, cond2)
 
-        return join_result
-
-    def _hash_join(self, t1, t2):
+    def _hash_join(self, data1, data2):
         pass
 
-    def _merge_sort_join(self, t1, t2):
-        pass
+    def _merge_sort_join(self, data1, data2):
+        """
+            Assumption: table1 is dictionary with keys subject and object
+            that contain lists
+        """
+        i = 0
 
-    def _radix_hash_join(self, t1, t2):
+        breakpoint()
+
+    def _radix_hash_join(self, data1, data2):
         pass
 
     def _load_mapping_file(self, mapping_file_path: str) -> dict:
