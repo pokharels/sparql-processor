@@ -31,7 +31,7 @@ class TabularData:
         return ""  # self.table
 
     def read_rdf(self, file_path: str, map_file: str = "mapping.json") -> dict:
-        """ 
+        """
             Read File and parse data and store into tables, based on property
         """
         all_lines = read_file_lines(filepath=file_path)
@@ -55,15 +55,15 @@ class TabularData:
 
             # Swap the first and second element so that property
             # always comes first.
-            subject_value = ext_values[0]
-            property_key = ext_values[1]
-            object_value = ext_values[2]
+            subject_value = ext_values[0].lower()
+            property_key = ext_values[1].lower()
+            object_value = ext_values[2].lower()
 
             # Add property to all_dicts if it doesn't exist
             if property_key not in all_dicts.keys():
                 all_dicts[property_key] = {
-                    'Subject': [],
-                    'Object': []
+                    'subject': [],
+                    'object': []
                 }
 
             # Add to mapper if it doesn't exist
@@ -72,7 +72,7 @@ class TabularData:
                 counter += 1
 
             # Add to all dicts
-            all_dicts[property_key]['Subject'].append(
+            all_dicts[property_key]['subject'].append(
                 mapper[subject_value])
 
             # Repeat for object
@@ -80,7 +80,7 @@ class TabularData:
                 mapper[object_value] = counter
                 counter += 1
 
-            all_dicts[property_key]['Object'].append(
+            all_dicts[property_key]['object'].append(
                 mapper[object_value])
 
         # Save mapping file
@@ -127,7 +127,11 @@ class TabularData:
         for cond in join_conditions:
             cond1, cond2 = cond.split("=")
 
-            partial_join = self.join(partial_join, cond1, cond2)
+            partial_join = self.join(
+                partial_join,
+                cond1.lower().strip(),
+                cond2.lower().strip()
+            )
 
             # table1, column1 = table_columns1[0].strip(), table_columns1[1].strip()
             # table2, column2 = table_columns2[0].strip(), table_columns2[1].strip()
@@ -155,15 +159,7 @@ class TabularData:
     def _process_column_list(self, data):
         pass
 
-
-    self _projection(partial_join, cond1, cond2):
-        projections = {}
-
-        return projections
-
     def join(self, partial_join, cond1, cond2, join_type: str = "hash"):
-        # TODO: Implement projection as well.
-
         (tab1, col1) = cond1.split(".")
         (tab2, col2) = cond2.split(".")
 
@@ -186,12 +182,17 @@ class TabularData:
         else:
             raise NotImplementedError("Join type not implemented")
 
-        partial_join[tab_col1] = join_result
-        partial_join[tab_col2] = join_result
-        
-        # Find projection and update partial join
+        partial_join[cond1] = join_result
+        partial_join[cond2] = join_result
 
+        # Find projection and update partial join
         partial_join = self._projection(partial_join, cond1, cond2)
+        return partial_join
+
+    def _projection(self, partial_join, cond1, cond2):
+        # TODO: Implement projection as well.
+
+        return partial_join
 
     def _hash_join(self, data1, data2):
         join_result = []
@@ -209,7 +210,7 @@ class TabularData:
 
     def _radix_hash_join(self, data1, data2):
         join_result = []
-        
+
         return join_result
 
     def _load_mapping_file(self, mapping_file_path: str) -> dict:
