@@ -97,7 +97,7 @@ class TestTabularData:
         assert join_conditions == [
             "follows.object = friendOf.subject"]
 
-    def test_result_of_query_three_hash_join(
+    def test_result_of_query_three_joins(
             self, simple_three_join_query,
             expected_three_join_result,
             tabular_three_join_data_object):
@@ -109,15 +109,52 @@ class TestTabularData:
             np.testing.assert_array_equal(
                 value, expected_three_join_result[key])
 
-    # def test_merge_sort_join(self, tabular_data_object, expected_join_result):
-    #     assert type(tabular_data_object) is TD
+        result = tabular_three_join_data_object.execute_query(
+            simple_three_join_query, "merge")
 
-    #     join_cols = ["likes.Object", 'hasReview.Subject']
+        for key, value in result.items():
+            np.testing.assert_array_equal(
+                value, expected_three_join_result[key])
 
-    #     joined_data = tabular_data_object.join(table1='likes',
-    #                                          table2='hasReview',
-    #                                          on_columns=join_cols,
-    #                                          join_type='merge_sort')
+    def test_projection_three_joins(self, tabular_three_join_data_object):
+        expected_result = {
+            "likes.subject": ['User0', 'User0', 'User0', 'User1',
+                              'User3', 'User0',],
+            "likes.object": ['Product1', 'Product1', 'Product2', 'Product2',
+                             'Product5', 'Product2'],
+            "hasReview.subject": ['Product0', 'Product1', 'Product2',
+                                  'Product2',  'Product2'],
+            "hasReview.object": ['Review5', 'Review3', 'Review1', 'Review1',
+                                 'Review9', 'Review1'],
+        }
+        partial_join = {
+            "likes.object": ['Product1', 'Product1', 'Product2', 'Product2',
+                             'Product5', 'Product2'],
+            "hasReview.subject": ['Product0', 'Product1', 'Product2',
+                                  'Product2', 'Product2'],
+        }
+        indices_1 = [0, 1, 2, 3, 5]
+        indices_2 = [1, 2, 3, 4]
+        projected_result = tabular_three_join_data_object._projection(
+            partial_join,
+            "likes.object",
+            indices_1,
+            "hasReview.subject",
+            indices_2
+        )
+        for key, value in projected_result.items():
+            np.testing.assert_array_equal(
+                value, expected_result[key])
 
-    #     assert type(joined_data) is TD
-    #     np.testing.assert_array_equal(joined_data, expected_join_result)
+    def test_merge_sort_join(self, tabular_data_object):
+        data_1 = ['Product1', 'Product1', 'Product2', 'Product2',
+                  'Product5', 'Product2']
+        data_2 = ['Product0', 'Product1', 'Product2',
+                  'Product2', 'Product2']
+        exp_indices_1 = [0, 1, 2, 3, 5]
+        exp_indices_2 = [1, 2, 3, 4]
+
+        indx1, indx2 = tabular_data_object._merge_sort_join(
+            data_1, data_2)
+        np.testing.assert_array_equal(exp_indices_1, indx1)
+        np.testing.assert_array_equal(exp_indices_2, indx2)

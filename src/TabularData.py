@@ -174,22 +174,23 @@ class TabularData:
             data2 = self.properties[tab2][col2]
 
         if join_type == "hash":
-            join_result = self._hash_join(data1, data2)
+            join_idx1, join_idx2 = self._hash_join(data1, data2)
         elif join_type == "merge_sort":
-            join_result = self._merge_sort_join(data1, data2)
+            join_idx1, join_idx2 = self._merge_sort_join(data1, data2)
         elif join_type == "radix_hash_join":
-            join_result = self._radix_hash_join(data1, data2)
+            join_idx1, join_idx2 = self._radix_hash_join(data1, data2)
         else:
             raise NotImplementedError("Join type not implemented")
 
-        partial_join[cond1] = join_result
-        partial_join[cond2] = join_result
+        # partial_join[cond1] = join_indices
+        # partial_join[cond2] = join_indices
 
         # Find projection and update partial join
-        partial_join = self._projection(partial_join, cond1, cond2)
+        partial_join = self._projection(
+            partial_join, cond1,  cond2, join_idx1, join_idx2)
         return partial_join
 
-    def _projection(self, partial_join, cond1, cond2):
+    def _projection(self, partial_join, cond1, col1_idx, cond2, col2_idx):
         # TODO: Implement projection as well.
 
         return partial_join
@@ -205,8 +206,7 @@ class TabularData:
         """
         join_result = []
         i = 0
-        breakpoint()
-        return join_result
+        return join_result, join_result
 
     def _radix_hash_join(self, data1, data2):
         join_result = []
