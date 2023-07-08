@@ -8,6 +8,7 @@ from src.utils import read_file_lines, save_to_json
 class TabularData:
     def __init__(self, rdf_file_path: str):
         self.properties = self.read_rdf(rdf_file_path)
+        self.column_access_order = []
 
     def __repr__(self) -> dict:
         """ String representation of a TabularData object
@@ -117,8 +118,15 @@ class TabularData:
         tables, columns, join_conditions = self._extract_from_sql_query(query)
         # TODO: Process tables, columns, join_conditions
         # Initialize the partial_join dictionary to store the intermediate results
-        partial_join = {}
 
+        # merged_keys = {
+        # f"{outer_key}.{inner_key}"
+        # for outer_key, inner_dict in self.properties.items()
+        # for inner_key in inner_dict
+        # }
+        # partial_join = {k: [] for k in merged_keys}
+
+        partial_join = {}
         # Process tables: Initialize the partial_join dictionary with table data
         # for table in tables:
         #     partial_join[table] = self.properties[table]
@@ -159,39 +167,53 @@ class TabularData:
     def _process_column_list(self, data):
         pass
 
+    def _get_column_names(self, tab1):
+        # TODO: return all columns of the table, in order
+        return [f"{tab1}.{col}" for col in self.properties[tab1].keys()]
+
     def join(self, partial_join, cond1, cond2, join_type: str = "hash"):
         (tab1, col1) = cond1.split(".")
         (tab2, col2) = cond2.split(".")
 
-        if tab1 in partial_join:
-            data1 = partial_join[cond1]
-        else:
-            data1 = self.properties[tab1][col1]
+        if cond1 not in self.column_access_order:
+            self.column_access_order += self._get_column_names(tab1)
+        if cond2 not in self.column_access_order:
+            self.column_access_order += self._get_column_names(tab2)
 
-        if tab2 in partial_join:
-            data2 = partial_join[cond2]
+        if cond1 in partial_join:
+            data1 = list(zip(*partial_join[cond1].values()))
+            # data1 = partial_join[cond1]
         else:
-            data2 = self.properties[tab2][col2]
+            data1 = list(zip(*self.properties[tab1].values()))
+
+        if cond2 in partial_join:
+            data2 = list(zip(*partial_join[cond2].values()))
+        else:
+            data2 = list(zip(*self.properties[tab2].values()))
 
         if join_type == "hash":
-            join_idx1, join_idx2 = self._hash_join(data1, data2)
+            result_cols = self._hash_join(data1, data2)
         elif join_type == "merge_sort":
-            join_idx1, join_idx2 = self._merge_sort_join(data1, data2)
+            result_cols = self._merge_sort_join(data1, data2)
         elif join_type == "radix_hash_join":
-            join_idx1, join_idx2 = self._radix_hash_join(data1, data2)
+            result_cols = self._radix_hash_join(data1, data2)
         else:
             raise NotImplementedError("Join type not implemented")
 
+        for i, col_dat in enumerate(result_cols):
+            partial_join[self.column_access_order[i]] = col_dat
         # partial_join[cond1] = join_indices
         # partial_join[cond2] = join_indices
 
         # Find projection and update partial join
-        partial_join = self._projection(
-            partial_join, cond1,  cond2, join_idx1, join_idx2)
+        # partial_join = self._projection(
+            # partial_join, cond1,  cond2, join_idx1, join_idx2)
         return partial_join
 
     def _projection(self, partial_join, cond1, col1_idx, cond2, col2_idx):
         # TODO: Implement projection as well.
+        (tab1, col1) = cond1.split(".")
+        (tab2, col2) = cond2.split(".")
 
         return partial_join
 
@@ -204,8 +226,14 @@ class TabularData:
             Assumption: table1 is dictionary with keys subject and object
             that contain lists
         """
+        join_result = [
+            ["user0", "user0", "user0", "user1", "user1"],
+            ["product1", "product2", "product2", "product2", "product2"],
+            ["product1", "product2", "product2", "product2", "product2"],
+            ["review3", "review1", "review9", "review1", "review9"]
+        ]
         join_result = []
-        i = 0
+        # i = 0
         return join_result, join_result
 
     def _radix_hash_join(self, data1, data2):
