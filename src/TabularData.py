@@ -220,21 +220,38 @@ class TabularData:
     def _hash_join(self, data1, data2):
         join_result = []
         return join_result
+    
+    def _merge_sort_join(self, data1: list, data2: list):
+        """
+            Assumption: data1 and data2 are lists of tuples.
+        """
+        i = 0
+        j = 0
+        k = 0
 
-    def _merge_sort_join(self, data1, data2):
-        """
-            Assumption: table1 is dictionary with keys subject and object
-            that contain lists
-        """
-        join_result = [
-            ["user0", "user0", "user0", "user1", "user1"],
-            ["product1", "product2", "product2", "product2", "product2"],
-            ["product1", "product2", "product2", "product2", "product2"],
-            ["review3", "review1", "review9", "review1", "review9"]
-        ]
-        join_result = []
-        # i = 0
-        return join_result, join_result
+        result_1 = []
+        result_2 = []
+
+        sorted_data1 = sorted(data1, key=lambda tup: tup[-1])
+        sorted_data2 = sorted(data2, key=lambda tup: tup[0])
+
+        while i < len(sorted_data1) and j < (len(sorted_data2)):
+            if j + k >= len(sorted_data2):
+                i += 1
+                k = 0
+                continue
+            if sorted_data1[i][-1] == sorted_data2[j+k][0]:
+                result_1.append(sorted_data1[i])
+                result_2.append(sorted_data2[j+k])
+                k += 1
+            elif sorted_data1[i][-1] < sorted_data2[j+k][0]:
+                i += 1
+                k = 0
+            else:
+                j += 1
+                k = 0
+        
+        return zip(*result_1), zip(*result_2)
 
     def _radix_hash_join(self, data1, data2):
         join_result = []
