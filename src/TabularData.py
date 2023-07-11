@@ -5,13 +5,8 @@ from src.utils import read_file_lines, save_to_json
 
 
 class TabularData:
-    def __init__(self, rdf_file_path: str, mapping: bool):
-        self.mapping = mapping
-        self.properties = self.read_rdf(rdf_file_path)
-        self.column_access_order = []
 
-    def __repr__(self) -> dict:
-        """ String representation of a TabularData object
+    """ String representation of a TabularData object
         {
         property1:
             {
@@ -29,7 +24,11 @@ class TabularData:
         :return: Tabular Data string representation
         :rtype: str
         """
-        return ""  # self.table
+
+    def __init__(self, rdf_file_path: str, mapping: bool):
+        self.mapping = mapping
+        self.properties = self.read_rdf(rdf_file_path)
+        self.column_access_order = []
 
     def read_rdf(self, file_path: str, map_file: str = "mapping.json") -> dict:
         """
@@ -180,7 +179,7 @@ class TabularData:
             partial[self.column_access_order[i]] = col_dat
         return partial
 
-    def _hash_join(self, data1, data2):
+    def _hash_join(self, data1: list, data2: list):
         join_result = []
         return join_result
 
@@ -210,9 +209,6 @@ class TabularData:
                     results[x].append(sorted_data1[i][x])
                 for y in range(m_keys):
                     results[n_keys+y].append(sorted_data2[j+k][y])
-
-                # result_1.append(sorted_data1[i])
-                # result_2.append(sorted_data2[j+k])
                 k += 1
             elif sorted_data1[i][-1] < sorted_data2[j+k][0]:
                 i += 1
@@ -226,16 +222,3 @@ class TabularData:
         join_result = []
 
         return join_result
-
-    def _load_mapping_file(self, mapping_file_path: str) -> dict:
-        pass
-
-    def retrieve_string_data(self,
-                             final_results,
-                             file_path: str,
-                             mapping_file_path: str):
-        assert mapping_file_path is not None, "Mapping file found empty"
-        mapping = self._load_mapping_file(mapping_file_path)
-        # Swap key, value pair
-        # return unmapped_data
-        return mapping
