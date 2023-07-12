@@ -178,7 +178,7 @@ class TestTabularData:
     #         np.testing.assert_array_equal(
     #             value, expected_result[key])
 
-    def test_merge_sort_join_3_join(self, tabular_data_object_no_map):
+    def test_join_3_joins(self, tabular_data_object_no_map):
         table_1 = [
             ('user0', 'product1', 'product1', "review3"),
             ('user0', 'product2', 'product2', 'review1'),
@@ -203,7 +203,11 @@ class TestTabularData:
             table_1, table_2)
         np.testing.assert_array_equal(expected_result, result)
 
-    def test_merge_sort_join_2_join(self, tabular_data_object_no_map):
+        hash_result = tabular_data_object_no_map._hash_join(
+            table_1, table_2)
+        np.testing.assert_array_equal(expected_result, hash_result)
+
+    def test_join_2_joins(self, tabular_data_object_no_map):
         table_1 = [
             ('user0', 'product1'),
             ('user0', 'product2'),
@@ -231,7 +235,11 @@ class TestTabularData:
             table_1, table_2)
         np.testing.assert_array_equal(expected_result, result)
 
-    def test_join_megre_sort_three_joins(self, tabular_three_join_data_object):
+        hash_result = tabular_data_object_no_map._hash_join(
+            table_1, table_2)
+        np.testing.assert_array_equal(expected_result, hash_result)
+
+    def test_join_three_joins_w_columns(self, tabular_three_join_data_object):
         cond1 = "likes.object"
         cond2 = "hasreview.subject"
         expected_result = {
@@ -282,10 +290,19 @@ class TestTabularData:
         }
 
         result = tabular_three_join_data_object.join(
-            cond1, cond2, join_type="merge_sort")
+            cond1, cond2, partial={}, join_type="merge_sort")
 
         assert result != {} and result is not None
         for key, value in result.items():
+            np.testing.assert_array_equal(
+                sorted(value),
+                sorted(expected_result[key])
+            )
+
+        hash_result = tabular_three_join_data_object.join(
+            cond1, cond2, partial={}, join_type="hash")
+        assert hash_result != {} and hash_result is not None
+        for key, value in hash_result.items():
             np.testing.assert_array_equal(
                 sorted(value),
                 sorted(expected_result[key])

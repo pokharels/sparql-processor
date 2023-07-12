@@ -180,6 +180,11 @@ class TabularData:
         return partial
 
     def _hash_join(self, data1: list, data2: list):
+        """
+            Assumption: data1 and data2 are lists of tuples.
+            Key Index is the rightmost value of data1,
+            and the leftmost value of data2.
+        """
         join_result = []
         return join_result
 
