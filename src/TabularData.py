@@ -185,9 +185,33 @@ class TabularData:
             Key Index is the rightmost value of data1,
             and the leftmost value of data2.
         """
-        join_result = []
-        return join_result
+        hash_table = {}
 
+        for row in data1:
+            join_col = row[-1]
+            if join_col not in hash_table:
+                hash_table[join_col] = []
+
+            hash_table[join_col].append(row)
+        
+        n_keys = len(list(data1)[0])  # Based on number of tuples
+        m_keys = len(list(data2)[0])
+        
+        results = [[] for _ in range(n_keys + m_keys)]
+
+        for row in data2:
+            join_col2 = row[0]
+
+            if join_col2 in hash_table:
+                for entries in hash_table[join_col]:
+                    for i, values in enumerate(entries):
+                        results[i].append(values)
+                    # Append new row values at the end
+                    results[-2].append(row[0])
+                    results[-1].append(row[1])
+        
+        return results
+        
     def _merge_sort_join(self, data1: list, data2: list):
         """
             Assumption: data1 and data2 are lists of tuples.
@@ -199,8 +223,8 @@ class TabularData:
         sorted_data1 = sorted(data1, key=lambda tup: tup[-1])
         sorted_data2 = sorted(data2, key=lambda tup: tup[0])
 
-        n_keys = len(sorted_data1[0])
-        m_keys = len(sorted_data2[0])
+        n_keys = len(sorted_data1[0])  # Based on number of tuples
+        m_keys = len(sorted_data2[0]) 
         results = [[] for _ in range(n_keys + m_keys)]
 
         while i < len(sorted_data1) and j < (len(sorted_data2)):
