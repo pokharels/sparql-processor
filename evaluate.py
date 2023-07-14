@@ -3,6 +3,7 @@ import time
 from src.TabularData import TabularData
 from src.utils import save_to_json
 
+
 def main(args):
     query = """
         SELECT
@@ -35,7 +36,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--result_path", default="./results/results.json")
     parser.add_argument(
-        "--mapping", type=bool, default=False)
+        "--mapping", type=bool, default=True)
 
     args = parser.parse_args()
 

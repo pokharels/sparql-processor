@@ -223,7 +223,7 @@ class TabularData:
         sorted_data2 = sorted(data2, key=lambda tup: tup[0])
 
         n_keys = len(sorted_data1[0])  # Based on number of tuples
-        m_keys = len(sorted_data2[0]) 
+        m_keys = len(sorted_data2[0])
         results = [[] for _ in range(n_keys + m_keys)]
 
         while i < len(sorted_data1) and j < (len(sorted_data2)):

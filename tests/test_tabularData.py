@@ -1,6 +1,5 @@
 import pytest
 import numpy as np
-from operator import itemgetter
 from src.TabularData import TabularData as TD
 
 
