@@ -186,6 +186,8 @@ class TabularData:
             and the leftmost value of data2.
         """
         hash_table = {}
+        data1 = list(data1)
+        data2 = list(data2)
 
         for row in data1:
             join_col = row[-1]
@@ -193,25 +195,22 @@ class TabularData:
                 hash_table[join_col] = []
 
             hash_table[join_col].append(row)
-        
-        n_keys = len(list(data1)[0])  # Based on number of tuples
-        m_keys = len(list(data2)[0])
-        
+
+        n_keys = len(data1[0])  # Based on number of tuples
+        m_keys = len(data2[0])
+
         results = [[] for _ in range(n_keys + m_keys)]
 
         for row in data2:
             join_col2 = row[0]
 
             if join_col2 in hash_table:
-                for entries in hash_table[join_col]:
-                    for i, values in enumerate(entries):
+                for entries in hash_table[join_col2]:
+                    new_tuple = list(entries) + list(row)
+                    for i, values in enumerate(new_tuple):
                         results[i].append(values)
-                    # Append new row values at the end
-                    results[-2].append(row[0])
-                    results[-1].append(row[1])
-        
         return results
-        
+
     def _merge_sort_join(self, data1: list, data2: list):
         """
             Assumption: data1 and data2 are lists of tuples.
