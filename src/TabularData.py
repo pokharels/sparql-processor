@@ -1,7 +1,7 @@
 """
     Tabular Data Class.
 """
-from src.utils import read_file_lines, save_to_json
+from src.utils import read_file_lines, save_to_json, read_watdiv_10M_dataset
 
 
 class TabularData:
@@ -34,59 +34,65 @@ class TabularData:
         """
             Read File and parse data and store into tables, based on property
         """
-        all_lines = read_file_lines(filepath=file_path)
+       
+        if '10M' in file_path:
+            all_dicts, mapper = read_watdiv_10M_dataset(file_path,
+                                                        mapping=self.mapping)
+        else:
+                    
+            all_lines = read_file_lines(filepath=file_path)
 
-        mapper = {}
-        counter = 0
-        unmatched_counter = 0
+            mapper = {}
+            counter = 0
+            unmatched_counter = 0
 
-        all_dicts = {}
+            all_dicts = {}
 
-        for line in all_lines:
-            line_split = line.replace('\t', ' ').replace(' .\n', '').split(" ")
+            for line in all_lines:
+                line_split = line.replace('\t', ' ').replace(' .\n', '').split(" ")
 
-            # IndexError occurs where the ":" pattern does not match
-            try:
-                ext_values = [x.split(":")[1] for x in line_split]
+                # IndexError occurs where the ":" pattern does not match
+                try:
+                    ext_values = [x.split(":")[1] for x in line_split]
 
-            except IndexError:
-                unmatched_counter += 1
-                continue
+                except IndexError:
+                    unmatched_counter += 1
+                    continue
 
-            # Swap the first and second element so that property
-            # always comes first.
-            subject_value = ext_values[0].lower()
-            property_key = ext_values[1].lower()
-            object_value = ext_values[2].lower()
+                # Swap the first and second element so that property
+                # always comes first.
+                subject_value = ext_values[0].lower()
+                property_key = ext_values[1].lower()
+                object_value = ext_values[2].lower()
 
-            # Add property to all_dicts if it doesn't exist
-            if property_key not in all_dicts.keys():
-                all_dicts[property_key] = {
-                    'subject': [],
-                    'object': []
-                }
+                # Add property to all_dicts if it doesn't exist
+                if property_key not in all_dicts.keys():
+                    all_dicts[property_key] = {
+                        'subject': [],
+                        'object': []
+                    }
 
-            if self.mapping:
-                # Add to mapper if it doesn't exist
-                if subject_value not in mapper.keys():
-                    mapper[subject_value] = counter
-                    counter += 1
-                # Add to all dicts
-                all_dicts[property_key]['subject'].append(
-                    mapper[subject_value])
+                if self.mapping:
+                    # Add to mapper if it doesn't exist
+                    if subject_value not in mapper.keys():
+                        mapper[subject_value] = counter
+                        counter += 1
+                    # Add to all dicts
+                    all_dicts[property_key]['subject'].append(
+                        mapper[subject_value])
 
-                # Repeat for object
-                if object_value not in mapper.keys():
-                    mapper[object_value] = counter
-                    counter += 1
+                    # Repeat for object
+                    if object_value not in mapper.keys():
+                        mapper[object_value] = counter
+                        counter += 1
 
-                all_dicts[property_key]['object'].append(
-                    mapper[object_value])
-            else:
-                all_dicts[property_key]['subject'].append(
-                    subject_value)
-                all_dicts[property_key]['object'].append(
-                    object_value)
+                    all_dicts[property_key]['object'].append(
+                        mapper[object_value])
+                else:
+                    all_dicts[property_key]['subject'].append(
+                        subject_value)
+                    all_dicts[property_key]['object'].append(
+                        object_value)
 
         # Save mapping file
         save_to_json(mapper, map_file)
