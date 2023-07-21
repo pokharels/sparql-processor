@@ -49,9 +49,9 @@ def read_watdiv_10M_dataset(file_path, mapping):
             obj = obj.strip('?"')
 
             # Use the predicate as the key
-            key = predicate.split('/')[-1].split('#')[-1]
-            subject = subject.split('/')[-1].split('#')[-1]
-            obj = obj.split('/')[-1].split('#')[-1].split('>')[0]
+            key = predicate.split('/')[-1].split('#')[-1].lower()
+            subject = subject.split('/')[-1].split('#')[-1].lower()
+            obj = obj.split('/')[-1].split('#')[-1].split('>')[0].lower()
 
             if key not in dataset_dict:
                 dataset_dict[key] = {
