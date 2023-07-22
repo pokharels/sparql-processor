@@ -1,8 +1,11 @@
 """
     Tabular Data Class.
 """
+import math
+import os
+import multiprocessing
 from src.utils import read_file_lines, save_to_json, read_watdiv_10M_dataset
-
+from collections import defaultdict
 
 class TabularData:
 
@@ -177,8 +180,8 @@ class TabularData:
             result_cols = self._hash_join(data1, data2)
         elif join_type == "merge_sort":
             result_cols = self._merge_sort_join(data1, data2)
-        elif join_type == "radix_hash_join":
-            result_cols = self._radix_hash_join(data1, data2)
+        elif join_type == "improved_hash_join":
+            result_cols = self._improved_hash_join(data1, data2)
         else:
             raise NotImplementedError("Join type not implemented")
 
@@ -253,7 +256,37 @@ class TabularData:
                 k = 0
         return results
 
-    def _radix_hash_join(self, data1, data2):
-        join_result = []
+    def _improved_hash_join(self, table_1, table_2):
+        table_1_dict = {}
+        table_2_dict = {}
 
-        return join_result
+        for row in table_1:
+            join_key = row[-1]
+            if join_key not in table_1_dict:
+                table_1_dict[join_key] = []
+            table_1_dict[join_key].append(row)
+
+        len_t1 = len(row)
+
+        for row in table_2:
+            join_key = row[0]
+            if join_key not in table_2_dict:
+                table_2_dict[join_key] = []
+            table_2_dict[join_key].append(row)
+
+        len_t2 = len(row)
+
+        results = [[] for _ in range(len_t1+len_t2)]
+
+        for join_key in set(table_1_dict.keys()) | set(table_2_dict.keys()):
+            rows_table_1 = table_1_dict.get(join_key, [])
+            rows_table_2 = table_2_dict.get(join_key, [])
+
+            for r1 in rows_table_1:
+                for r2 in rows_table_2:
+                    for i, val1 in enumerate(r1):
+                        results[i].append(val1)
+                    for i, val2 in enumerate(r2):
+                        results[i+len(r1)].append(val2)
+
+        return results

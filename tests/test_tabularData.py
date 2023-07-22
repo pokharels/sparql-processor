@@ -181,6 +181,12 @@ class TestTabularData:
             inner_list) for inner_list in expected_result]
         np.testing.assert_array_equal(expected_result, hash_result)
 
+        radix_hash_result = tabular_data_object_no_map._improved_hash_join(
+            table_1, table_2)
+        radix_hash_result = [sorted(
+            inner_list) for inner_list in radix_hash_result]
+        np.testing.assert_array_equal(expected_result, radix_hash_result)
+
     def test_join_2_joins(self, tabular_data_object_no_map):
         table_1 = [
             ('user0', 'product1'),
@@ -216,6 +222,12 @@ class TestTabularData:
         expected_result = [sorted(
             inner_list) for inner_list in expected_result]
         np.testing.assert_array_equal(expected_result, hash_result)
+
+        radix_hash_result = tabular_data_object_no_map._improved_hash_join(
+            table_1, table_2)
+        radix_hash_result = [sorted(
+            inner_list) for inner_list in radix_hash_result]
+        np.testing.assert_array_equal(expected_result, radix_hash_result)
 
     def test_join_three_joins_w_columns(self, tabular_three_join_data_object):
         cond1 = "likes.object"
@@ -281,6 +293,15 @@ class TestTabularData:
             cond1, cond2, partial={}, join_type="hash")
         assert hash_result != {} and hash_result is not None
         for key, value in hash_result.items():
+            np.testing.assert_array_equal(
+                sorted(value),
+                sorted(expected_result[key])
+            )
+
+        radix_hash_result = tabular_three_join_data_object.join(
+            cond1, cond2, partial={}, join_type="improved_hash_join")
+        assert radix_hash_result != {} and radix_hash_result is not None
+        for key, value in radix_hash_result.items():
             np.testing.assert_array_equal(
                 sorted(value),
                 sorted(expected_result[key])

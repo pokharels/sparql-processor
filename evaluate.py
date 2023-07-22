@@ -32,7 +32,10 @@ if __name__ == "__main__":
     parser.add_argument(
         "--data_path", default="./data/watdiv100k.txt")
     parser.add_argument(
-        "--join_type", default="hash")
+        "--join_type",
+        default="hash",
+        choices=["hash", "merge_sort", "improved_hash_join"]
+    )
     parser.add_argument(
         "--result_path", default="./results/results.json")
     parser.add_argument(
