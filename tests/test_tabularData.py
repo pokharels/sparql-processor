@@ -142,7 +142,7 @@ class TestTabularData:
                 sorted(value), sorted(expected_three_join_result[key]))
 
         result = tabular_three_join_data_object.execute_query(
-            simple_three_join_query, "merge_sort")
+            simple_three_join_query, "sort_merge")
         assert result != {} and result is not None
         for key, value in result.items():
             np.testing.assert_array_equal(
@@ -169,7 +169,7 @@ class TestTabularData:
             ["review1", "review1", "review3", "review9", "review9"],
             ["s1", "s1", "s0", "s6", "s6"]
         ]
-        result = tabular_data_object_no_map._merge_sort_join(
+        result = tabular_data_object_no_map._sort_merge_join(
             table_1, table_2)
         np.testing.assert_array_equal(expected_result, result)
 
@@ -211,7 +211,7 @@ class TestTabularData:
             # ('user1', 'product2', 'review1'),
             # ('user1', 'product2', 'review1')
         ]
-        result = tabular_data_object_no_map._merge_sort_join(
+        result = tabular_data_object_no_map._sort_merge_join(
             table_1, table_2)
         np.testing.assert_array_equal(expected_result, result)
 
@@ -280,7 +280,7 @@ class TestTabularData:
         }
 
         result = tabular_three_join_data_object.join(
-            cond1, cond2, partial={}, join_type="merge_sort")
+            cond1, cond2, partial={}, join_type="sort_merge")
 
         assert result != {} and result is not None
         for key, value in result.items():

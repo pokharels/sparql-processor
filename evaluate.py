@@ -23,18 +23,20 @@ def main(args):
 
     result = td.execute_query(query, args.join_type)
     print(f"Query execution finished in {time.time() - start_time}s")
-    save_to_json(result, args.result_path)
+    # save_to_json(result, args.result_path)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
-        "--data_path", default="./data/watdiv100k.txt")
+        "--data_path", default="./data/watdiv100k.txt",
+        choices=["./data/watdiv100k.txt", "./data/watdiv.10M.nt"]
+        )
     parser.add_argument(
         "--join_type",
         default="hash",
-        choices=["hash", "merge_sort", "improved_hash_join"]
+        choices=["hash", "sort_merge", "improved_hash_join"]
     )
     parser.add_argument(
         "--result_path", default="./results/results.json")

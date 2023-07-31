@@ -1,11 +1,9 @@
 """
     Tabular Data Class.
 """
-import math
-import os
-import multiprocessing
-from src.utils import read_file_lines, save_to_json, read_watdiv_10M_dataset
 from collections import defaultdict
+from src.utils import read_file_lines, save_to_json, read_watdiv_10M_dataset
+
 
 class TabularData:
 
@@ -37,12 +35,12 @@ class TabularData:
         """
             Read File and parse data and store into tables, based on property
         """
-       
+
         if '10M' in file_path:
             all_dicts, mapper = read_watdiv_10M_dataset(file_path,
                                                         mapping=self.mapping)
         else:
-                    
+
             all_lines = read_file_lines(filepath=file_path)
 
             mapper = {}
@@ -52,7 +50,8 @@ class TabularData:
             all_dicts = {}
 
             for line in all_lines:
-                line_split = line.replace('\t', ' ').replace(' .\n', '').split(" ")
+                line_split = line.replace(
+                    '\t', ' ').replace(' .\n', '').split(" ")
 
                 # IndexError occurs where the ":" pattern does not match
                 try:
@@ -96,10 +95,9 @@ class TabularData:
                         subject_value)
                     all_dicts[property_key]['object'].append(
                         object_value)
-                
-                
-                print(f'***Total unmatched lines: {unmatched_counter} out \
-                of {len(all_lines)}***')
+
+            print(f'***Total unmatched lines: {unmatched_counter} out \
+            of {len(all_lines)}***')
 
         # Save mapping file
         save_to_json(mapper, map_file)
@@ -178,8 +176,8 @@ class TabularData:
 
         if join_type == "hash":
             result_cols = self._hash_join(data1, data2)
-        elif join_type == "merge_sort":
-            result_cols = self._merge_sort_join(data1, data2)
+        elif join_type == "sort_merge":
+            result_cols = self._sort_merge_join(data1, data2)
         elif join_type == "improved_hash_join":
             result_cols = self._improved_hash_join(data1, data2)
         else:
@@ -189,39 +187,7 @@ class TabularData:
             partial[self.column_access_order[i]] = col_dat
         return partial
 
-    def _hash_join(self, data1: list, data2: list):
-        """
-            Assumption: data1 and data2 are lists of tuples.
-            Key Index is the rightmost value of data1,
-            and the leftmost value of data2.
-        """
-        hash_table = {}
-        data1 = list(data1)
-        data2 = list(data2)
-
-        for row in data1:
-            join_col = row[-1]
-            if join_col not in hash_table:
-                hash_table[join_col] = []
-
-            hash_table[join_col].append(row)
-
-        n_keys = len(data1[0])  # Based on number of tuples
-        m_keys = len(data2[0])
-
-        results = [[] for _ in range(n_keys + m_keys)]
-
-        for row in data2:
-            join_col2 = row[0]
-
-            if join_col2 in hash_table:
-                for entries in hash_table[join_col2]:
-                    new_tuple = list(entries) + list(row)
-                    for i, values in enumerate(new_tuple):
-                        results[i].append(values)
-        return results
-
-    def _merge_sort_join(self, data1: list, data2: list):
+    def _sort_merge_join(self, data1: list, data2: list):
         """
             Assumption: data1 and data2 are lists of tuples.
         """
@@ -256,37 +222,70 @@ class TabularData:
                 k = 0
         return results
 
-    def _improved_hash_join(self, table_1, table_2):
-        table_1_dict = {}
-        table_2_dict = {}
+    def _hash_join(self, table_1, table_2, buckets=256):
+        """
+            Assumption: data1 and data2 are lists of tuples.
+            Key Index is the rightmost value of data1,
+            and the leftmost value of data2.
+        """
+        table_1_dict = {i: defaultdict(list) for i in range(buckets)}
+        table_2 = list(table_2)
+
+        def cluster(key):
+            if isinstance(key, str):
+                code_points = [str(ord(char)) for char in key[-4:]]
+                b_key = int("".join(code_points))
+            elif isinstance(key, int):
+                b_key = key
+            else:
+                raise NotImplementedError
+            return b_key % buckets
 
         for row in table_1:
             join_key = row[-1]
-            if join_key not in table_1_dict:
-                table_1_dict[join_key] = []
-            table_1_dict[join_key].append(row)
+            table_1_dict[cluster(join_key)][join_key].append(row)
 
         len_t1 = len(row)
 
+        results = [[] for _ in range((len_t1)+len(table_2[0]))]
+
         for row in table_2:
-            join_key = row[0]
-            if join_key not in table_2_dict:
-                table_2_dict[join_key] = []
-            table_2_dict[join_key].append(row)
+            join_col2 = row[0]
 
-        len_t2 = len(row)
+            if cluster(join_col2) in table_1_dict:
+                matched_val = table_1_dict[cluster(join_col2)]
+                if join_col2 in matched_val:
+                    entries = matched_val[join_col2]
+                    for entry in entries:
+                        new_tuple = list(entry) + list(row)
+                        for i, values in enumerate(new_tuple):
+                            results[i].append(values)
+        return results
 
-        results = [[] for _ in range(len_t1+len_t2)]
+    def _improved_hash_join(self, data1: list, data2: list):
+        """
+            Assumption: data1 and data2 are lists of tuples.
+            Key Index is the rightmost value of data1,
+            and the leftmost value of data2.
+        """
+        hash_table = defaultdict(list)
+        data2 = list(data2)
 
-        for join_key in set(table_1_dict.keys()) | set(table_2_dict.keys()):
-            rows_table_1 = table_1_dict.get(join_key, [])
-            rows_table_2 = table_2_dict.get(join_key, [])
+        for row in data1:
+            join_col = row[-1]
+            hash_table[join_col].append(row)
 
-            for r1 in rows_table_1:
-                for r2 in rows_table_2:
-                    for i, val1 in enumerate(r1):
-                        results[i].append(val1)
-                    for i, val2 in enumerate(r2):
-                        results[i+len(r1)].append(val2)
+        n_keys = len(row)  # Based on number of tuples
+        m_keys = len(data2[0])
 
+        results = [[] for _ in range(n_keys + m_keys)]
+
+        for row in data2:
+            join_col2 = row[0]
+
+            if join_col2 in hash_table:
+                for entries in hash_table[join_col2]:
+                    new_tuple = list(entries) + list(row)
+                    for i, values in enumerate(new_tuple):
+                        results[i].append(values)
         return results
