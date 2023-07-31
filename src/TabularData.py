@@ -93,12 +93,13 @@ class TabularData:
                         subject_value)
                     all_dicts[property_key]['object'].append(
                         object_value)
+                
+                
+                print(f'***Total unmatched lines: {unmatched_counter} out \
+                of {len(all_lines)}***')
 
         # Save mapping file
         save_to_json(mapper, map_file)
-
-        print(f'***Total unmatched lines: {unmatched_counter} out \
-                of {len(all_lines)}***')
 
         return all_dicts
 
